@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+*.pyd
+*.pdb
+*.log
+*.pot
+*.mo
+*.db
+*.sqlite3
+*.env
+.env
+.venv
+venv/
+ENV/
+.env.*
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test and coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# Docker
+*.pid
+
+# Git
+*.orig
+
+# Misc
+*.bak
+*.swp
+*.swo
+*.tmp
+*.temp
+
+# Ignore data and output folders
+/data/
+/output/
+
+# Ignore secrets
+secrets.*
