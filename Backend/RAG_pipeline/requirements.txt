@@ -1,0 +1,15 @@
+langgraph
+langchain
+langchain-community
+langserve
+langsmith
+langchain_groq
+dotenv
+aiofiles
+streamlit
+graphviz
+pillow
+pdfminer.six
+numpy 
+pandas
+elasticsearch
