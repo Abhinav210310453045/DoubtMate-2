@@ -60,6 +60,3 @@ htmlcov/
 
 # Ignore secrets
 secrets.*
-
-
-data_ingestion_pipeline/pdf_data

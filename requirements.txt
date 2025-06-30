@@ -12,4 +12,4 @@ pillow
 pdfminer.six
 numpy 
 pandas
-elasticsearch
+elasticsearch[async]==8.13.0
