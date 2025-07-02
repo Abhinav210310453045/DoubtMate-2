@@ -13,8 +13,9 @@ pdfminer.six
 numpy 
 pandas
 elasticsearch
-"python-jose[cryptography]"
-"passlib[bcrypt]"
+python-jose[cryptography]
+passlib[bcrypt]
 python-multipart
-"uvicorn[standard]"
+uvicorn[standard]
 sqlalchemy
+fastapi
