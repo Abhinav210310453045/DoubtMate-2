@@ -17,13 +17,14 @@ build/
 *.sqlite3
 *.env
 .env
+.env.*
 .venv
 venv/
 ENV/
-.env.*
+Backend/.env
 
 # Jupyter Notebooks
-.ipynb_checkpoints
+.ipynb_checkpoints/
 
 # VS Code
 .vscode/
@@ -36,27 +37,3 @@ Thumbs.db
 htmlcov/
 .tox/
 .nox/
-.coverage
-.coverage.*
-.cache
-.pytest_cache/
-
-# Docker
-*.pid
-
-# Git
-*.orig
-
-# Misc
-*.bak
-*.swp
-*.swo
-*.tmp
-*.temp
-
-# Ignore data and output folders
-/data/
-/output/
-
-# Ignore secrets
-secrets.*
