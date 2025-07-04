@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+*.pyd
+*.pdb
+*.sqlite3
+*.db
+*.log
+*.pot
+*.mo
+*.env
+.env.*
+.venv/
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Secret files
+*.env
+secrets.*
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.bak
+*.backup
+*.secret
+*.token
+*.credentials
+
+# Docker
+*.pid
+
+# Ignore local data
+*.local
+
+# Ignore test outputs
+*.coverage
+.coverage.*
+.cache/
+
+# Ignore shared and RAG pipeline cache
+Backend/**/__pycache__/
+Backend/**/.env
+Backend/**/secrets.*
+Backend/**/test/
+RAG_pipeline/**/__pycache__/
+RAG_pipeline/**/.env
+RAG_pipeline/**/secrets.*
+RAG_pipeline/**/test/
+shared/**/__pycache__/
+shared/**/.env
+shared/**/secrets.*
+shared/**/test/
