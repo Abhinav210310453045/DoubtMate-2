@@ -19,3 +19,5 @@ python-multipart
 uvicorn[standard]
 sqlalchemy
 fastapi
+boto3
+aioboto3
