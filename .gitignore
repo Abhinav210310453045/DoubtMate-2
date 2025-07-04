@@ -20,6 +20,7 @@ build/
 .venv/
 venv/
 ENV/
+Backend/.env
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
