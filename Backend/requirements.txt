@@ -2,6 +2,7 @@ langgraph
 langchain
 langchain-community
 langserve
+langsmith
 langchain_groq
 dotenv
 aiofiles
@@ -12,8 +13,11 @@ pdfminer.six
 numpy 
 pandas
 elasticsearch
-"python-jose[cryptography]"
-"passlib[bcrypt]"
+python-jose[cryptography]
+passlib[bcrypt]
 python-multipart
-"uvicorn[standard]"
+uvicorn[standard]
 sqlalchemy
+fastapi
+boto3
+aioboto3
