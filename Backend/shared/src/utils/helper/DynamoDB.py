@@ -16,10 +16,10 @@ class DynamoDB:
         if self._dynamodb:
             await self._dynamodb.__aexit__(None, None, None)
 
-    def get_table(self, table_name):
+    async def get_table(self, table_name):
         if not self._dynamodb:
             raise Exception("Call connect() before using this class!")
-        return self._dynamodb.Table(table_name)
+        return await self._dynamodb.Table(table_name)
     # ----------- BASIC CRUD -----------
 
     async def create_item(self, table_name, item):

@@ -1,39 +1,56 @@
-from datetime import timedelta, datetime
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from starlette import status 
-from AuthAPI.src.modules.database import SessionLocal
-from AuthAPI.src.models.models import Users
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm    
-from jose import JWTError, jwt
-from AuthAPI.src.models.models import CreateUserRequest, Token
-router = APIRouter(tags=["Login"],prefix="/login")
-SECRET_KEY="ThisIsSecretAuthKey"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-auth2_bearer = OAuth2PasswordBearer(tokenUrl="login/token")
+from fastapi import APIRouter, HTTPException, status, Depends
+from AuthAPI.src.models.schemas import (
+    UserRegister,
+    UserLogin,
+    TokenResponse,
+    RegisterResponse,
+    MeResponse,
+    AccessTokenResponse
+)
+from AuthAPI.src.modules.user_service import UserService
+from AuthAPI.src.modules.auth_handler import AuthHandler
+from shared.src.utils.helper.jwt_bearer import JWTBearer
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-db_dependency = Annotated[Session, Depends(get_db)] 
+user_service = UserService()
+auth_handler = AuthHandler()
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db_dependency: db_dependency, user: CreateUserRequest):
-    existing_user = db_dependency.query(Users).filter(Users.username == user.username).first()
-    if existing_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
-    
-    hashed_password = bcrypt_context.hash(user.password)
-    new_user = Users(username=user.username, password=hashed_password)
-    db_dependency.add(new_user)
-    db_dependency.commit()
-    return {"message": "User created successfully"}
+
+# ✅ PUBLIC: Register new user
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+async def register(user: UserRegister):
+    result = await user_service.register_user(user)
+    if "error" in result:
+        raise HTTPException(status_code=409, detail=result["error"])
+    return RegisterResponse(**result)
+
+
+# ✅ PUBLIC: Login & get tokens
+@router.post("/login", response_model=TokenResponse)
+async def login(credentials: UserLogin):
+    result = await user_service.authenticate_user(credentials)
+    if "error" in result:
+        raise HTTPException(status_code=401, detail=result["error"])
+    return TokenResponse(**result)
+
+
+# 🔐 PROTECTED: Refresh access token (valid for all roles)
+@router.post("/refresh", response_model=AccessTokenResponse)
+async def refresh_token(payload=Depends(JWTBearer())):
+    new_token = auth_handler.create_access_token({
+        "sub": payload["sub"],
+        "user_id": payload["user_id"],
+        "role": payload["role"]
+    })
+    return AccessTokenResponse(access_token=new_token)
+
+
+# 🔐 PROTECTED: Get current user info
+@router.get("/me", response_model=MeResponse)
+async def get_me(payload=Depends(JWTBearer())):
+    return MeResponse(
+        username=payload["sub"],
+        user_id=payload["user_id"],
+        role=payload["role"]
+    )
