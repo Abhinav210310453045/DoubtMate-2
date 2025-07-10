@@ -37,3 +37,47 @@ Thumbs.db
 htmlcov/
 .tox/
 .nox/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# VSCode or editor configs
+.vscode/
+.idea/
+
+# Virtual environments
+venv/
+.env
+
+# AWS credentials (if copied or stored temporarily)
+aws_credentials/
+
+# Byte-compiled / binary files
+*.log
+*.sqlite3
+*.db
+
+# Environment files
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / Coverage output
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Pip/Build artifacts
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/

@@ -2,43 +2,74 @@ import aioboto3
 from boto3.dynamodb.conditions import Key, Attr
 
 class DynamoDB:
-    def __init__(self, region='ap-south-1', profile_name=None):
-        self.region = region
-        self.profile_name = profile_name
-        self._session = None
-        self._dynamodb = None
+    """
+    Singleton class for managing DynamoDB connections and operations using aioboto3.
+    """
+    _instance = None
+    _session = None
+    _dynamodb = None
+    _region = 'eu-north-1'
+    _profile_name = 'DoubtMate'
 
-    async def connect(self):
-        self._session = aioboto3.Session(profile_name=self.profile_name)
-        self._dynamodb = await self._session.resource('dynamodb', region_name=self.region).__aenter__()
+    @classmethod
+    async def connect(cls, region='ap-south-1', profile_name=None):
+        if cls._instance is None:
+            cls._instance = cls
+            cls._region = region
+            cls._profile_name = profile_name
+            cls._session = aioboto3.Session(profile_name=cls._profile_name)
+            cls._dynamodb = await cls._session.resource('dynamodb', region_name=cls._region).__aenter__()
+        return cls._instance
 
-    async def disconnect(self):
-        if self._dynamodb:
-            await self._dynamodb.__aexit__(None, None, None)
+    @classmethod
+    async def disconnect(cls):
+        if cls._dynamodb:
+            await cls._dynamodb.__aexit__(None, None, None)
+            cls._dynamodb = None
+            cls._session = None
+            cls._instance = None
 
-    def get_table(self, table_name):
-        if not self._dynamodb:
+    @classmethod
+    async def get_table(cls, table_name):
+        if not cls._dynamodb:
             raise Exception("Call connect() before using this class!")
-        return self._dynamodb.Table(table_name)
-    # ----------- BASIC CRUD -----------
+        return await cls._dynamodb.Table(table_name)
 
-    async def create_item(self, table_name, item):
-        table = self.get_table(table_name)
+    # ----------- BASIC CRUD -----------
+    @classmethod
+    async def create_item(cls, table_name, item):
+        table = await cls.get_table(table_name)
         response = await table.put_item(Item=item)
         return response
 
-    async def find_all(self, table_name):
-        table = self.get_table(table_name)
+    @classmethod
+    async def find_all(cls, table_name):
+        table = await cls.get_table(table_name)
         response = await table.scan()
         return response.get('Items', [])
 
-    async def find_one(self, table_name, key):
-        table = self.get_table(table_name)
+    @classmethod
+    async def find_one(cls, table_name, key):
+        table = await cls.get_table(table_name)
         response = await table.get_item(Key=key)
         return response.get('Item')
+    @classmethod
+    async def query_by_index(
+        cls, table_name: str, index_name: str, key_name: str, key_value: str, limit: int = 1
+    ):
+        table = await cls.get_table(table_name)
+        response = await table.query(
+            IndexName=index_name,
+            KeyConditionExpression=Key(key_name).eq(key_value),
+            Limit=limit
+        )
+        items = response.get("Items", [])
+        return items[0] if items else None
 
-    async def update_one(self, table_name, key, update_expression, expression_values, expression_names=None):
-        table = self.get_table(table_name)
+
+    @classmethod
+    async def update_one(cls, table_name, key, update_expression, expression_values, expression_names=None):
+        table = await cls.get_table(table_name)
         kwargs = {
             "Key": key,
             "UpdateExpression": update_expression,
@@ -50,24 +81,25 @@ class DynamoDB:
         response = await table.update_item(**kwargs)
         return response.get('Attributes')
 
-    async def delete_one(self, table_name, key):
-        table = self.get_table(table_name)
+    @classmethod
+    async def delete_one(cls, table_name, key):
+        table = await cls.get_table(table_name)
         response = await table.delete_item(Key=key)
         return response
 
-    async def delete_all(self, table_name, key_name='id'):
-        items = await self.find_all(table_name)
+    @classmethod
+    async def delete_all(cls, table_name, key_name='id'):
+        items = await cls.find_all(table_name)
         deleted = 0
         for item in items:
-            await self.delete_one(table_name, {key_name: item[key_name]})
+            await cls.delete_one(table_name, {key_name: item[key_name]})
             deleted += 1
         return f"Deleted {deleted} items"
 
     # ----------- EXTRA / OPTIONAL -----------
-
-    # Query by partition key (optionally by sort key)
-    async def query(self, table_name, key_condition_expression, expression_values, expression_names=None, index_name=None):
-        table = self.get_table(table_name)
+    @classmethod
+    async def query(cls, table_name, key_condition_expression, expression_values, expression_names=None, index_name=None):
+        table = await cls.get_table(table_name)
         kwargs = {
             "KeyConditionExpression": key_condition_expression,
             "ExpressionAttributeValues": expression_values
@@ -79,9 +111,9 @@ class DynamoDB:
         response = await table.query(**kwargs)
         return response.get('Items', [])
 
-    # Batch write (put/delete multiple items)
-    async def batch_write(self, table_name, put_items=None, delete_keys=None):
-        table = self.get_table(table_name)
+    @classmethod
+    async def batch_write(cls, table_name, put_items=None, delete_keys=None):
+        table = await cls.get_table(table_name)
         async with table.batch_writer() as batch:
             if put_items:
                 for item in put_items:
@@ -91,17 +123,17 @@ class DynamoDB:
                     await batch.delete_item(Key=key)
         return {"put_count": len(put_items or []), "delete_count": len(delete_keys or [])}
 
-    # Batch get (fetch multiple items by keys)
-    async def batch_get(self, table_name, keys):
-        table = self.get_table(table_name)
+    @classmethod
+    async def batch_get(cls, table_name, keys):
+        table = await cls.get_table(table_name)
         response = await table.batch_get_item(
             RequestItems={table_name: {"Keys": keys}}
         )
         return response["Responses"].get(table_name, [])
 
-    # Scan with filter expression
-    async def filtered_scan(self, table_name, filter_expression, expression_values, expression_names=None):
-        table = self.get_table(table_name)
+    @classmethod
+    async def filtered_scan(cls, table_name, filter_expression, expression_values, expression_names=None):
+        table = await cls.get_table(table_name)
         kwargs = {
             "FilterExpression": filter_expression,
             "ExpressionAttributeValues": expression_values
@@ -111,20 +143,20 @@ class DynamoDB:
         response = await table.scan(**kwargs)
         return response.get('Items', [])
 
-    # Count (number of items in the table)
-    async def count(self, table_name):
-        table = self.get_table(table_name)
+    @classmethod
+    async def count(cls, table_name):
+        table = await cls.get_table(table_name)
         response = await table.scan(Select='COUNT')
         return response.get('Count', 0)
 
-    # Exists (returns True if the item exists, else False)
-    async def exists(self, table_name, key):
-        item = await self.find_one(table_name, key)
+    @classmethod
+    async def exists(cls, table_name, key):
+        item = await cls.find_one(table_name, key)
         return item is not None
 
-    # Atomic increment/decrement a numeric field
-    async def increment_field(self, table_name, key, field, delta=1):
-        table = self.get_table(table_name)
+    @classmethod
+    async def increment_field(cls, table_name, key, field, delta=1):
+        table = await cls.get_table(table_name)
         response = await table.update_item(
             Key=key,
             UpdateExpression=f"ADD {field} :inc",
