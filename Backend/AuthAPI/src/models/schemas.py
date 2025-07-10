@@ -16,10 +16,12 @@ class UserRole(str, Enum):
     student = "student"
 
 class UserRegister(BaseModel):
+    name: str
     username: str
-    email: EmailStr
+    email: str
     password: str
-    role: UserRole  # ✅ NEW
+    role: UserRole
+
 
 
 class UserLogin(BaseModel):
@@ -52,6 +54,7 @@ class AuthResponse(BaseModel):
 
 class UserInDB(BaseModel):
     user_id: str
+    name:str
     username: str
     email: EmailStr
     password_hash: str

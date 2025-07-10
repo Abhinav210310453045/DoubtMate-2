@@ -21,3 +21,4 @@ sqlalchemy
 fastapi
 boto3
 aioboto3
+"pydantic[email]"

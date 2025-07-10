@@ -6,34 +6,34 @@ load_dotenv()
 
 from shared.src.utils.helper.DynamoDB import DynamoDB
 
-REGION = os.environ.get('AWS_REGION', 'ap-south-1')
+REGION = os.environ.get('AWS_REGION')
 PROFILE = os.environ.get('AWS_PROFILE')
+print(REGION, PROFILE)
 
-async def test_connection():
-    db = DynamoDB(region=REGION, profile_name=PROFILE)
+async def test_dynamodb_singleton():
     try:
-        await db.connect()
+        # Connect using the singleton classmethod
+        await DynamoDB.connect(region=REGION, profile_name=PROFILE)
         print("✅ Connected to DynamoDB successfully!")
 
-        # List tables
+        # List tables using aioboto3 directly for verification
         session = aioboto3.Session(profile_name=PROFILE)
         async with session.client('dynamodb', region_name=REGION) as client:
             tables = await client.list_tables()
             print("📋 Available tables:", tables["TableNames"])
 
-        # Use exact table name
+        # Add one data item to a table (replace 'users' and item as needed)
         table_name = "users"
-        table = db.get_table(table_name)
-        response = await table.scan()
-        items = response.get('Items', [])
-        print(f"✅ Fetched {len(items)} items from '{table_name}'")
+        item = {"username": "test_id_2", "name": "Test User", "email": "test1@example.com",'role':'student'}
+        response = await DynamoDB.create_item(table_name, item)
+        print(f"📝 Item insert response: {response}")
 
-    except Exception as e:
-        print("❌ Error connecting to DynamoDB:", str(e))
-
-    finally:
-        await db.disconnect()
+        # Disconnect
+        await DynamoDB.disconnect()
         print("🔌 Disconnected from DynamoDB.")
 
+    except Exception as e:
+        print("❌ Error during DynamoDB operations:", str(e))
+
 if __name__ == "__main__":
-    asyncio.run(test_connection())
+    asyncio.run(test_dynamodb_singleton())
